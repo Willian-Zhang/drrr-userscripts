@@ -2,7 +2,7 @@
 // @name         DRRR Tripcode helper
 // @namespace    com.drrr.tripcode-helper
 // @version      1.2
-// @description  shows how to use babel compiler
+// @description  Verifies Tripcode used on DRRR
 // @author       Willian
 // @require      https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.6.15/browser-polyfill.min.js
 // @require      https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.6.15/browser.min.js
