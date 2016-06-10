@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DRRR Tripcode helper
 // @namespace    com.drrr.tripcode-helper
-// @version      1.5
+// @version      2.0
 // @description  Verifies Tripcode used on DRRR
 // @author       Willian
 // @require      https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.6.15/browser-polyfill.min.js
@@ -106,77 +106,106 @@ var scanNewTripcode = function(event, chat){
   }
 };
 
+var tripcodeOprationPrompt = function(isRemove = false){
+    var text = isRemove ? `Are you sure to remove {1} to {2}?` : `Are you sure to add {1} to {2}?`;
+    var confirmButtonColor = isRemove ? "#DD6B55" : "#36d13e";
+    var confirmButtonText = isRemove ? `❌${t("Yes, remove it!")}` : `✅${t("Yes, add it!")}`;
+    var successText = isRemove ? "Removed!" : "Added!";
+    return function removeTripCodePrompt(name, tripcode){
+    swal({
+        title: "Tripcode",
+        text: t(text,
+                t(`<span style="color:#F8BB86">{1}</span>`,
+                tripcode),
+                t(`<span style="color:#F8BB86">{1}</span>`,
+                $("<div>").text(name).html())
+                ),
+        type: "warning",
+        confirmButtonColor: confirmButtonColor ,
+        confirmButtonText: confirmButtonText,
+        showCancelButton: true,
+        closeOnConfirm: false,
+        html: true
+    },function removeTripCode(){
+        if(isRemove){
+        TP.remove(name, tripcode);
+        }else{
+        TP.addForcibly(name, tripcode);
+        }
+        swal("Tripcode", t(successText), "success");
+    });
+    };
+};
+var changeTripcodeDisplayForMenu = function(menu, newTag){
+    $(menu).find('.dropdown-item-tripcode').text(newTag);
+};
+
 $(unsafeWindow).on('room.chat.join', scanNewTripcode);
 $(unsafeWindow).on('room.chat.message', scanNewTripcode);
 
 $(unsafeWindow).on('room.user.menu.show',function(event, menu, user, functions){
   var addDevisionIfNot = functions.addDevisionIfNot;
   var resetDevider = functions.resetDevider;
-
   var addNode = functions.addNode;
 
-  if(user.tripcode){
-    var tripcodeOprationPrompt = function(isRemove = false){
-      var text = isRemove ? `Are you sure to remove {1} to {2}?` : `Are you sure to add {1} to {2}?`;
-      var confirmButtonColor = isRemove ? "#DD6B55" : "#36d13e";
-      var confirmButtonText = isRemove ? `❌${t("Yes, remove it!")}` : `✅${t("Yes, add it!")}`;
-      var successText = isRemove ? "Removed!" : "Added!";
-      return function removeTripCodePrompt(name, tripcode){
-        swal({
-           title: "Tripcode",
-           text: t(text,
-                  t(`<span style="color:#F8BB86">{1}</span>`,
-                    tripcode),
-                  t(`<span style="color:#F8BB86">{1}</span>`,
-                    $("<div>").text(name).html())
-                  ),
-           type: "warning",
-           confirmButtonColor: confirmButtonColor ,
-           confirmButtonText: confirmButtonText,
-           showCancelButton: true,
-           closeOnConfirm: false,
-           html: true
-        },function removeTripCode(){
-          if(isRemove){
-            TP.remove(name, tripcode);
-          }else{
-            TP.addForcibly(name, tripcode);
-          }
-          swal("Tripcode", t(successText), "success");
-        });
-      };
-    };
+  var rightcodes = TP.getTripcodes(user.name);
 
-    addDevisionIfNot();
-    var result = TP.add(user.name, user.tripcode);
-    if(result){
-      addNode('✅', function(){
-        tripcodeOprationPrompt(true)(user.name, user.tripcode);
-      });
+  if(user.tripcode || rightcodes.length > 0){
+    resetDevider();
+    if(user.tripcode){
+        var result = TP.add(user.name, user.tripcode);
+        if(result){
+            // addNode('✅', function(){
+            //     tripcodeOprationPrompt(true)(user.name, user.tripcode);
+            // });
+            changeTripcodeDisplayForMenu(menu, `✅#${user.tripcode}`);
+        }else{
+            addDevisionIfNot();
+            addNode(`❌ #${user.tripcode}`,function(){
+                tripcodeOprationPrompt(false)(user.name, user.tripcode);
+            });
+            
+            rightcodes.forEach(function(tripcode){
+                addNode(`✅ #${tripcode}`, function(){
+                tripcodeOprationPrompt(true)(user.name, tripcode);
+                });
+            });
+        }
     }else{
-      addNode(`❌${user.tripcode}`,function(){
-        tripcodeOprationPrompt(false)(user.name, user.tripcode);
-      });
-      var rightcodes = TP.getTripcodes(user.name);
-      rightcodes.forEach(function(tripcode){
-        addNode(`✅${tripcode}`, function(){
-          tripcodeOprationPrompt(true)(user.name, tripcode);
+        addDevisionIfNot();
+        addNode(`❓${t('Not using tripcode')}`, function(){
+            tripcodeOprationPrompt(true)(user.name, user.tripcode);
         });
-      });
     }
 
-    resetDevider();
-    addDevisionIfNot();
-    addNode(`Other names:`, null ,'dropdown-item-unclickable');
-    var names = TP.getNames(user.tripcode);
-    names.forEach(function(name){
-      if(name == user.name)
-        return;
 
-      addNode(`${name}`, function(){
-        tripcodeOprationPrompt(true)(name, user.tripcode);
-      });
-    });
+
+    resetDevider();
+    if(user.tripcode){
+        rightcodes.forEach(function(tripcode){
+            addDevisionIfNot();
+            addNode(t('Other IDs for #{1}:', tripcode), null ,'dropdown-item-unclickable');
+            var names = TP.getNames(tripcode);
+            names.forEach(function(name){
+                if(name == user.name)
+                    return;
+
+                addNode(`${name}`, function(){
+                    tripcodeOprationPrompt(true)(name, tripcode);
+                });
+            });
+        });
+
+    }else{
+        addDevisionIfNot();
+        addNode(`Other Tripcodes:`, null ,'dropdown-item-unclickable');
+        rightcodes.forEach(function(tripcode){
+            addNode(`#${tripcode}`, function(){
+                tripcodeOprationPrompt(true)(user.name, tripcode);
+            });
+        });
+    }
+
   }
 });
 
