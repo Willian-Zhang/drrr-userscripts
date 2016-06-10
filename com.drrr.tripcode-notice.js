@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DRRR Tripcode helper
 // @namespace    com.drrr.tripcode-helper
-// @version      2.0
+// @version      2.1
 // @description  Verifies Tripcode used on DRRR
 // @author       Willian
 // @require      https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.6.15/browser-polyfill.min.js
@@ -151,6 +151,7 @@ $(unsafeWindow).on('room.user.menu.show',function(event, menu, user, functions){
   var rightcodes = TP.getTripcodes(user.name);
 
   if(user.tripcode || rightcodes.length > 0){
+    var badTripFlag = false;
     resetDevider();
     if(user.tripcode){
         var result = TP.add(user.name, user.tripcode);
@@ -158,8 +159,10 @@ $(unsafeWindow).on('room.user.menu.show',function(event, menu, user, functions){
             // addNode('✅', function(){
             //     tripcodeOprationPrompt(true)(user.name, user.tripcode);
             // });
-            changeTripcodeDisplayForMenu(menu, `✅#${user.tripcode}`);
+            changeTripcodeDisplayForMenu(menu, `✅ #${user.tripcode}`);
         }else{
+            badTripFlag = true;
+            changeTripcodeDisplayForMenu(menu, `❌ #${user.tripcode}`);
             addDevisionIfNot();
             addNode(`❌ #${user.tripcode}`,function(){
                 tripcodeOprationPrompt(false)(user.name, user.tripcode);
@@ -182,7 +185,11 @@ $(unsafeWindow).on('room.user.menu.show',function(event, menu, user, functions){
 
     resetDevider();
     if(user.tripcode){
-        rightcodes.forEach(function(tripcode){
+        var allCodes =  rightcodes;
+        if(badTripFlag){
+            allCodes.unshift(user.tripcode);
+        }
+        allCodes.forEach(function(tripcode){
             addDevisionIfNot();
             addNode(t('Other IDs for #{1}:', tripcode), null ,'dropdown-item-unclickable');
             var names = TP.getNames(tripcode);
