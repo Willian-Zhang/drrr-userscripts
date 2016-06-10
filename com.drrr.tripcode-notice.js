@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DRRR Tripcode helper
 // @namespace    com.drrr.tripcode-helper
-// @version      1.4
+// @version      1.5
 // @description  Verifies Tripcode used on DRRR
 // @author       Willian
 // @require      https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.6.15/browser-polyfill.min.js
@@ -109,24 +109,11 @@ var scanNewTripcode = function(event, chat){
 $(unsafeWindow).on('room.chat.join', scanNewTripcode);
 $(unsafeWindow).on('room.chat.message', scanNewTripcode);
 
-$(unsafeWindow).on('room.user.menu.show',function(event, menu, user){
-  var deviderAdded = false;
-  var addDevisionIfNot = function addDevisionIfNot(){
-    if(!deviderAdded){
-      $('<li />',{class:'divider' , role:'presentation'}).appendTo(menu);
-      deviderAdded = true;
-    }
-  };
-  var resetDevider = function(){ deviderAdded = false; };
+$(unsafeWindow).on('room.user.menu.show',function(event, menu, user, functions){
+  var addDevisionIfNot = functions.addDevisionIfNot;
+  var resetDevider = functions.resetDevider;
 
-  var addNode = function addNode(text, onClick , className){
-    className = className ? className : 'dropdown-item';
-    var node = $('<li />').append(
-      $('<a />',{'tabindex':'-1','class':className,'text':text})
-    ).appendTo(menu);
-    if ( onClick ){ node.click(onClick.bind(menu)); }
-    return node;
-  };
+  var addNode = functions.addNode;
 
   if(user.tripcode){
     var tripcodeOprationPrompt = function(isRemove = false){
@@ -179,12 +166,13 @@ $(unsafeWindow).on('room.user.menu.show',function(event, menu, user){
     }
 
     resetDevider();
+    addDevisionIfNot();
+    addNode(`Other names:`, null ,'dropdown-item-unclickable');
     var names = TP.getNames(user.tripcode);
     names.forEach(function(name){
       if(name == user.name)
         return;
 
-      addDevisionIfNot();
       addNode(`${name}`, function(){
         tripcodeOprationPrompt(true)(name, user.tripcode);
       });
