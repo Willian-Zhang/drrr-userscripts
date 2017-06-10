@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         法官 Helper
 // @namespace    com.drrr.judge-helper
-// @version      0.2
+// @version      0.3
 // @description  try to take over the world!
 // @author       Willian
 // @match        http://drrr.com/room/*
@@ -44,6 +44,17 @@ var formSetInstruction = function (key, value){
         return $.post('',settings).done(function(e){if(e){swal(e);}});
     };
 };
+var translator = unsafeWindow.translator;
+function isEnglish(){
+    return translator.constructor.catalog["Yes"] == "YES"
+}
+function addTranslation(){
+    var catalog = translator.constructor.catalog;
+    catalog['Set all to {1}']     = '讓所有人成為 {1}';
+    catalog['Set defalut to {1}'] = '設置進入默認為 {1}';
+}
+if(!isEnglish())   addTranslation();
+
 $(unsafeWindow).on('room.user.menu.show',function(event, menu, user, functions){
     functions.resetDevider();
     functions.addDevisionIfNot();
