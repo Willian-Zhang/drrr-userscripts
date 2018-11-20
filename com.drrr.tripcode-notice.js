@@ -1,13 +1,15 @@
 // ==UserScript==
 // @name         DRRR Tripcode helper
 // @namespace    com.drrr.tripcode-helper
-// @version      2.1
+// @version      2.2
 // @description  Verifies Tripcode used on DRRR
 // @author       Willian
 // @require      https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.6.15/browser-polyfill.min.js
 // @require      https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.6.15/browser.min.js
 // @match        http://drrr.com/room*
 // @match        http://drrr.local/room*
+// @match        https://drrr.com/room*
+// @match        https://drrr.local/room*
 // ==/UserScript==
 
 /* jshint ignore:start */

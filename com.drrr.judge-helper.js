@@ -1,10 +1,13 @@
 // ==UserScript==
 // @name         法官 Helper
 // @namespace    com.drrr.judge-helper
-// @version      0.3
+// @version      0.4
 // @description  try to take over the world!
 // @author       Willian
 // @match        http://drrr.com/room/*
+// @match        https://drrr.com/room/*
+// @match        http://drrr.local/room*
+// @match        https://drrr.local/room*
 // @grant        法官
 // ==/UserScript==
 
