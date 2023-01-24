@@ -17,7 +17,7 @@ const Swal = Sweetalert2;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const session_name = 'plugin-playlist';
 let playlist = [];
-let should_cast = false;
+
 
 function formListText() {
     return playlist.join('\n');
@@ -37,21 +37,24 @@ function load() {
     }
 }
 
+function list_changed(){
+    displayCount();
+    save();
+}
+
 function updateList(text) {
     for (let song of text.split('\n').map(e => e.trim())) {
         if (!playlist.includes(song)) {
-            playlist.push(song)
+            playlist.push(song);
         }
     }
-    displayCount();
-    save();
+    list_changed();
     return playlist;
 }
 
 function editList(text) {
     playlist = text.split('\n').map(e => e.trim());
-    displayCount();
-    save();
+    list_changed();
     return playlist;
 }
 
@@ -103,42 +106,39 @@ $show_playlist.click(async function () {
 let Standby = "Standby";
 let Casting = "Casting...";
 
+let should_cast = false;
 let $should_cast = $(`<div style="float: left; line-height: 40px; width:30px; margin-left: 10px;" >${Standby}</div>`);
 $("#musicBox").append($should_cast);
 $should_cast.click(function () {
-    let text = $should_cast.text();
-    if (text == Standby) {
-        $should_cast.text(Casting);
-        should_cast = true;
-        trigger_playlist();
-    } else {
+    if (should_cast) {
         $should_cast.text(Standby);
         should_cast = false;
+    } else {
+        $should_cast.text(Casting);
+        should_cast = true;
+        wait_or_cast_next();
     }
 });
 
-async function trigger_playlist() {
-    if (event_attached == false) {
-        // needs to manual trigger
-        let np = box.np();
-        let is_playing = false;
-        if (np) {
-            let howl = box.np().howl;
-            let time = howl.seek();
-            await sleep(30);
-            is_playing = howl.seek() != time;
-        }
-        if (is_playing) {
-            np.howl.once('end', castNext)
-        } else {
-            castNext();
-        }
+async function wait_or_cast_next() {
+    let np = box.np();
+    let is_playing = false;
+    if (np) {
+        let howl = box.np().howl;
+        let time = howl.seek();
+        await sleep(30);
+        is_playing = howl.seek() != time;
+    }
+    if (is_playing && event_attached == false) {
+        np.howl.once('end', castNext);
+    } else {
+        castNext();
     }
 }
 function castNext() {
     let next = playlist.pop(0);
     if (next) {
-        displayCount();
+        list_changed();
         $.post('', {
             music: "music",
             name: "",
@@ -150,9 +150,7 @@ function castNext() {
 function music_end(id) {
     let music = this;
     console.log('end', music);
-    if (should_cast) {
-        castNext();
-    }
+    wait_or_cast_next();
 }
 function music_start(music) {
     console.log('start', music);
@@ -160,7 +158,7 @@ function music_start(music) {
 
 function share_failed() {
     if (should_cast) {
-        trigger_playlist();
+        wait_or_cast_next();
     }
 }
 
