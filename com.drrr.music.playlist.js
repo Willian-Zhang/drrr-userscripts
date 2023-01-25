@@ -52,6 +52,16 @@ function updateList(text) {
     return playlist;
 }
 
+function updateListFront(text) {
+    for (let song of text.split('\n').map(e => e.trim())) {
+        if (!playlist.includes(song)) {
+            playlist.unshift(song);
+        }
+    }
+    list_changed();
+    return playlist;
+}
+
 function editList(text) {
     playlist = text.split('\n').map(e => e.trim());
     list_changed();
@@ -75,13 +85,16 @@ async function clickDialog(header, callback, inputValueFunc = null) {
     }
 }
 
+let $addF_playlist = $('<div id="playlist-add" style="float: left; line-height: 40px; width:20px; margin-left: 10px;" ><span>🔝</span></div>');
+$("#musicBox").append($addF_playlist);
+$addF_playlist.click(clickDialog.bind(this, 'Add to begining of Playlist', updateListFront));
 
-let $add_playlist = $('<div id="playlist-add" style="float: left; line-height: 40px; width:30px; margin-left: 10px;" ><span>➕</span></div>');
+let $add_playlist = $('<div id="playlist-add" style="float: left; line-height: 40px; width:20px; margin-left: 10px;" ><span>➕</span></div>');
 $("#musicBox").append($add_playlist);
 $add_playlist.click(clickDialog.bind(this, 'Add to Playlist', updateList));
 
 
-let $edit_playlist = $('<div id="playlist-edit" style="float: left; line-height: 40px; width:30px; margin-left: 10px;" ><span>📋</span></div>');
+let $edit_playlist = $('<div id="playlist-edit" style="float: left; line-height: 40px; width:20px; margin-left: 10px;" ><span>📋</span></div>');
 $("#musicBox").append($edit_playlist);
 $edit_playlist.click(clickDialog.bind(this, 'Edit Playlist', editList, formListText));
 
