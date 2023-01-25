@@ -58,53 +58,41 @@ function editList(text) {
     return playlist;
 }
 
+async function clickDialog(header, callback, inputValueFunc = null) {
+    const { value: text } = await Swal.fire({
+        input: 'textarea',
+        inputLabel: header,
+        inputValue: inputValueFunc(),
+        inputPlaceholder: 'http://...',
+        inputAttributes: {
+            'aria-label': 'http://...'
+        },
+        showCancelButton: true
+    })
 
-let $add_playlist = $('<div id="playlist-add" style="float: left; line-height: 40px; width:30px; margin-left: 10px;" ><span>🎵</span></div>');
+    if (text) {
+        callback(text);
+    }
+}
+
+
+let $add_playlist = $('<div id="playlist-add" style="float: left; line-height: 40px; width:30px; margin-left: 10px;" ><span>➕</span></div>');
 $("#musicBox").append($add_playlist);
-$add_playlist.click(async function () {
-    const { value: text } = await Swal.fire({
-        input: 'textarea',
-        inputLabel: 'Add to Playlist',
-        inputPlaceholder: 'http://...',
-        inputAttributes: {
-            'aria-label': 'http://...'
-        },
-        showCancelButton: true
-    })
+$add_playlist.click(clickDialog.bind(this, 'Add to Playlist', updateList));
 
-    if (text) {
-        updateList(text);
-        //Swal.fire('',formListText());
-    }
-});
-let $edit_playlist = $('<div id="playlist-add" style="float: left; line-height: 40px; width:30px; margin-left: 10px;" ><span>🎶</span></div>');
+
+let $edit_playlist = $('<div id="playlist-edit" style="float: left; line-height: 40px; width:30px; margin-left: 10px;" ><span>📋</span></div>');
 $("#musicBox").append($edit_playlist);
-$edit_playlist.click(async function () {
-    const { value: text } = await Swal.fire({
-        input: 'textarea',
-        inputLabel: 'Edit Playlist',
-        inputValue: formListText(),
-        inputPlaceholder: 'http://...',
-        inputAttributes: {
-            'aria-label': 'http://...'
-        },
-        showCancelButton: true
-    })
+$edit_playlist.click(clickDialog.bind(this, 'Edit Playlist', editList, formListText));
 
-    if (text) {
-        editList(text);
-        //Swal.fire('',formListText());
-    }
-});
-
-let $show_playlist = $('<div style="float: left; line-height: 40px; width:30px; margin-left: 10px; margin-right: 10px;" ><span>Show</span><span id="playlist-count"></span></div>');
+let $show_playlist = $('<div style="float: left; line-height: 40px; width:30px; margin-left: 10px; margin-right: 10px;" ><span>⏏</span><span id="playlist-count"></span></div>');
 $("#musicBox").append($show_playlist);
 $show_playlist.click(async function () {
     Swal.fire('', formListText());
 });
 
-let Standby = "Standby";
-let Casting = "Casting...";
+let Standby = "▶";
+let Casting = "⏸";
 
 let should_cast = false;
 let $should_cast = $(`<div style="float: left; line-height: 40px; width:30px; margin-left: 10px;" >${Standby}</div>`);
@@ -136,7 +124,7 @@ async function wait_or_cast_next() {
     }
 }
 function castNext() {
-    let next = playlist.pop(0);
+    let next = playlist.shift();
     if (next) {
         list_changed();
         $.post('', {
