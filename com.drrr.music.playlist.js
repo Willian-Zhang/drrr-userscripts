@@ -69,10 +69,13 @@ function editList(text) {
 }
 
 async function clickDialog(header, callback, inputValueFunc = null) {
+    if (inputValueFunc && typeof inputValueFunc === 'function'){
+        inputValueFunc = inputValueFunc();
+    }
     const { value: text } = await Swal.fire({
         input: 'textarea',
         inputLabel: header,
-        inputValue: inputValueFunc(),
+        inputValue: inputValueFunc,
         inputPlaceholder: 'http://...',
         inputAttributes: {
             'aria-label': 'http://...'
