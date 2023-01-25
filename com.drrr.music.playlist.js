@@ -143,11 +143,22 @@ function castNext() {
     let next = playlist.shift();
     if (next) {
         list_changed();
+        let was = $should_cast.text();
+        $should_cast.text("🕐");
         $.post('', {
             music: "music",
             name: "",
             url: next,
-        });
+        }).done(function() {
+            if ($should_cast.text() =="🕐"){
+                $should_cast.text(was + "🟢");
+            }
+          })
+          .fail(function() {
+            if ($should_cast.text() =="🕐"){
+                $should_cast.text(was + "🔴");
+            }
+          });
     }
 }
 
