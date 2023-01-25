@@ -150,7 +150,9 @@ function castNext() {
 function music_end(id) {
     let music = this;
     console.log('end', music);
-    wait_or_cast_next();
+    if(should_cast){
+        wait_or_cast_next();
+    }
 }
 function music_start(music) {
     console.log('start', music);
