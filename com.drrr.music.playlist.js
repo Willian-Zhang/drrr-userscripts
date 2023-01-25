@@ -18,7 +18,14 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const session_name = 'plugin-playlist';
 let playlist = [];
 
-
+function removeUser(str){
+    let url = new URL(str);
+    url.searchParams.delete('user');
+    url.searchParams.delete('uid');
+    // 163
+    url.searchParams.delete('userid');
+    return url.toString();
+}
 function formListText() {
     return playlist.join('\n');
 }
@@ -44,8 +51,9 @@ function list_changed(){
 
 function updateList(text) {
     for (let song of text.split('\n').map(e => e.trim())) {
-        if (!playlist.includes(song)) {
-            playlist.push(song);
+        let url = removeUser(song);
+        if (!playlist.includes(url)) {
+            playlist.push(url);
         }
     }
     list_changed();
@@ -54,8 +62,9 @@ function updateList(text) {
 
 function updateListFront(text) {
     for (let song of text.split('\n').map(e => e.trim())) {
-        if (!playlist.includes(song)) {
-            playlist.unshift(song);
+        let url = removeUser(song);
+        if (!playlist.includes(url)) {
+            playlist.unshift(url);
         }
     }
     list_changed();
@@ -63,7 +72,7 @@ function updateListFront(text) {
 }
 
 function editList(text) {
-    playlist = text.split('\n').map(e => e.trim());
+    playlist = text.split('\n').map(e => removeUser(e));
     list_changed();
     return playlist;
 }
