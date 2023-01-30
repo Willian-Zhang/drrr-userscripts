@@ -110,6 +110,13 @@ let $edit_playlist = $('<div id="playlist-edit" style="float: left; line-height:
 $("#musicBox").append($edit_playlist);
 $edit_playlist.click(clickDialog.bind(this, 'Edit Playlist', editList, formListText));
 
+let $random_playlist = $('<div id="playlist-randomize" style="float: left; line-height: 40px; width:20px; margin-left: 10px;" ><span>🔀</span></div>');
+$("#musicBox").append($random_playlist);
+$random_playlist.click(function () {
+    playlist.sort(() => Math.random() - 0.5);
+    Swal.fire('Done', 'Playlist randomized', 'success');
+});
+
 let $show_playlist = $('<div style="float: left; line-height: 40px; width:30px; margin-left: 10px; margin-right: 10px;" ><span>⏏</span><span id="playlist-count"></span></div>');
 $("#musicBox").append($show_playlist);
 $show_playlist.click(async function () {
