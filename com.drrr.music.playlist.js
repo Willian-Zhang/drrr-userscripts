@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Music Playlist helper
+// @name         DRRR Music Playlist helper
 // @namespace    com.drrr.music.playlist
 // @version      0.2.1
 // @description  Queue your music
