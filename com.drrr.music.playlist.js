@@ -1,13 +1,14 @@
 // ==UserScript==
 // @name         Music Playlist helper
 // @namespace    com.drrr.music.playlist
-// @version      0.1
-// @description  try to take over the world!
-// @author       You
+// @version      0.2
+// @description  Queue your music
+// @author       Shukudai
 // @match        https://drrr.com/room/*
 // @match        http://drrr.local/room/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=drrr.com
 // @require      https://cdn.jsdelivr.net/npm/sweetalert2@11
+// @license      YOU MAY ONLY USE IT, REVIEW IT, NOTHING ELSE
 // @grant        unsafeWindow
 // @grant        none
 // ==/UserScript==
@@ -97,20 +98,19 @@ async function clickDialog(header, callback, inputValueFunc = null) {
     }
 }
 
-let $addF_playlist = $('<div id="playlist-add" style="float: left; line-height: 40px; width:20px; margin-left: 10px;" ><span>🔝</span></div>');
-$("#musicBox").append($addF_playlist);
-$addF_playlist.click(clickDialog.bind(this, 'Add to begining of Playlist', updateListFront));
-
-let $add_playlist = $('<div id="playlist-add" style="float: left; line-height: 40px; width:20px; margin-left: 10px;" ><span>➕</span></div>');
+let $add_playlist = $('<div id="playlist-add" style="float: left; line-height: 40px; width:20px; margin-left: 10px;" ><i class="icon icon-additem"></i></div>');
 $("#musicBox").append($add_playlist);
 $add_playlist.click(clickDialog.bind(this, 'Add to Playlist', updateList));
 
-
-let $edit_playlist = $('<div id="playlist-edit" style="float: left; line-height: 40px; width:20px; margin-left: 10px;" ><span>📋</span></div>');
+let $edit_playlist = $('<div id="playlist-edit" style="float: left; line-height: 40px; width:20px; margin-left: 10px;" ><i class="icon icon-list"></div>');
 $("#musicBox").append($edit_playlist);
 $edit_playlist.click(clickDialog.bind(this, 'Edit Playlist', editList, formListText));
 
-let $random_playlist = $('<div id="playlist-randomize" style="float: left; line-height: 40px; width:20px; margin-left: 10px;" ><span>🔀</span></div>');
+let $addF_playlist = $('<div id="playlist-add" style="float: left; line-height: 40px; width:20px; margin-left: 10px;" ><span><i class="icon icon-top-up-balance"></i></span></div>');
+$("#musicBox").append($addF_playlist);
+$addF_playlist.click(clickDialog.bind(this, 'Add to top of Playlist', updateListFront));
+
+let $random_playlist = $('<div id="playlist-randomize" style="float: left; line-height: 40px; width:20px; margin-left: 10px;" ><i class="icon icon-shuffle-1"></div>');
 $("#musicBox").append($random_playlist);
 $random_playlist.click(function () {
     playlist.sort(() => Math.random() - 0.5);
@@ -123,18 +123,18 @@ $show_playlist.click(async function () {
     Swal.fire('', formListText());
 });
 
-let Standby = "▶";
-let Casting = "⏸";
+let Standby = '<i class="icon icon-play"></i>';
+let Casting = '<i class="icon icon-pause"></i>';
 
 let should_cast = false;
 let $should_cast = $(`<div style="float: left; line-height: 40px; width:30px; margin-left: 10px;" >${Standby}</div>`);
 $("#musicBox").append($should_cast);
 $should_cast.click(function () {
     if (should_cast) {
-        $should_cast.text(Standby);
+        $should_cast.html(Standby);
         should_cast = false;
     } else {
-        $should_cast.text(Casting);
+        $should_cast.html(Casting);
         should_cast = true;
         wait_or_cast_next();
     }
@@ -155,24 +155,26 @@ async function wait_or_cast_next() {
         castNext();
     }
 }
+
+const HTMLRecent = '<i class="icon icon-recent"></i>';
 function castNext() {
     let next = playlist.shift();
     if (next) {
         list_changed();
         let was = $should_cast.text();
-        $should_cast.text("🕐");
+        $should_cast.html(HTMLRecent);
         $.post('', {
             music: "music",
             name: "",
             url: next,
         }).done(function() {
-            if ($should_cast.text() =="🕐"){
-                $should_cast.text(was + "🟢");
+            if ($should_cast.html() == HTMLRecent){
+                $should_cast.html(was + '<i class="icon icon-check-circle"></i>');
             }
           })
           .fail(function() {
-            if ($should_cast.text() =="🕐"){
-                $should_cast.text(was + "🔴");
+            if ($should_cast.text() == HTMLRecent){
+                $should_cast.html(was + "🔴");
             }
           });
     }
