@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Music Playlist helper
 // @namespace    com.drrr.music.playlist
-// @version      0.2
+// @version      0.2.1
 // @description  Queue your music
 // @author       Shukudai
 // @match        https://drrr.com/room/*
@@ -102,7 +102,7 @@ let $add_playlist = $('<div id="playlist-add" style="float: left; line-height: 4
 $("#musicBox").append($add_playlist);
 $add_playlist.click(clickDialog.bind(this, 'Add to Playlist', updateList));
 
-let $edit_playlist = $('<div id="playlist-edit" style="float: left; line-height: 40px; width:20px; margin-left: 10px;" ><i class="icon icon-list"></div>');
+let $edit_playlist = $('<div id="playlist-edit" style="float: left; line-height: 40px; width:20px; margin-left: 10px;" ><i class="icon icon-pencil"></div>');
 $("#musicBox").append($edit_playlist);
 $edit_playlist.click(clickDialog.bind(this, 'Edit Playlist', editList, formListText));
 
@@ -117,7 +117,7 @@ $random_playlist.click(function () {
     Swal.fire('Done', 'Playlist randomized', 'success');
 });
 
-let $show_playlist = $('<div style="float: left; line-height: 40px; width:30px; margin-left: 10px; margin-right: 10px;" ><span>⏏</span><span id="playlist-count"></span></div>');
+let $show_playlist = $('<div style="float: left; line-height: 40px; width:30px; margin-left: 10px; margin-right: 10px;" ><i class="icon icon-list"><span id="playlist-count"></span></div>');
 $("#musicBox").append($show_playlist);
 $show_playlist.click(async function () {
     Swal.fire('', formListText());
