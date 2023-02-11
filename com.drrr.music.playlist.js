@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DRRR Music Playlist helper
 // @namespace    com.drrr.music.playlist
-// @version      0.2.1
+// @version      0.3.0
 // @description  Queue your music
 // @author       Shukudai
 // @match        https://drrr.com/room/*
@@ -200,18 +200,19 @@ function share_failed() {
 load();
 
 let event_attached = false;
-const old_playMusic = DRRRClientBehavior.playMusic;
-DRRRClientBehavior.playMusic = function new_playmusic(music) {
-    old_playMusic(music);
-    let np = box.np();
-    if (music == np.music_object) {
-        event_attached = true;
-        music_start(music)
-        np.howl.once('end', music_end.bind(music))
-    } else {
-        console.error('different music: ', music, np.music_object)
+let playing = null;
+$(document).on("play-music.client.drrr", function (e, music, attributes) {
+    event_attached = true;
+    music_start(music);
+    playing = music;
+})
+$(document).on("music-end", function (e, music_item) {
+    if(playing != music_item.music_object){
+        console.warn("diff music start and end", playing, music_item.music_object);
     }
-}
+    music_end(music_item.music_object)
+})
+
 $(window).on('room.chat.async-response', function (e, r) {
     if (r && r.message && r.message.startsWith("Sharing failed")) {
         share_failed();
