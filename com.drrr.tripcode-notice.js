@@ -1,13 +1,13 @@
 // ==UserScript==
 // @name         DRRR Tripcode helper
 // @namespace    com.drrr.tripcode-helper
-// @version      2.2
+// @version      2.2.1
 // @description  Verifies Tripcode used on DRRR
 // @author       Willian
-// @match        http://drrr.com/room*
-// @match        http://drrr.local/room*
-// @match        https://drrr.com/room*
-// @match        https://drrr.local/room*
+// @match        *://drrr.com/room*
+// @match        *://drrr.local/room*
+// @match        *://drrr.lan/room*
+// @grant        unsafeWindow
 // ==/UserScript==
 
 class TripcodeHelper {
