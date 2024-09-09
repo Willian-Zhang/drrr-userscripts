@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DRRR Tripcode helper
 // @namespace    com.drrr.tripcode-helper
-// @version      3.0.1
+// @version      3.0.2
 // @description  Verifies Tripcode used on DRRR
 // @author       Willian
 // @match        *://drrr.com/room*
@@ -146,8 +146,8 @@ $(unsafeWindow).on('room.user.menu.show', async function tripcode_menu(event, me
 
   var rightcodes = await TP.getTripcodes(user.name);
 
-  if (user.tripcode || rightcodes.length > 0) {
-    var badTripFlag = false;
+  {
+    let badTripFlag = false;
     resetDevider();
     if (user.tripcode) {
       var result = await TP.is_name_exist_but_tc_wrong(user.name, user.tripcode);
@@ -181,18 +181,18 @@ $(unsafeWindow).on('room.user.menu.show', async function tripcode_menu(event, me
       });
     }
 
-
-
-    resetDevider();
     if (user.tripcode) {
       var allCodes = rightcodes;
       if (badTripFlag) {
         allCodes.unshift(user.tripcode);
       }
       for (const tripcode of allCodes) {
+        let names = await TP.getNames(tripcode);
+        if (names.length == 1) {
+          continue;
+        }
         addDevisionIfNot();
         addNode(t('Other IDs for #{1}:', tripcode), null, 'dropdown-item-unclickable');
-        var names = await TP.getNames(tripcode);
         names.forEach(function (name) {
           if (name == user.name)
             return;
