@@ -1,93 +1,92 @@
 // ==UserScript==
 // @name         DRRR Tripcode helper
 // @namespace    com.drrr.tripcode-helper
-// @version      2.2.1
+// @version      3.0.1
 // @description  Verifies Tripcode used on DRRR
 // @author       Willian
 // @match        *://drrr.com/room*
 // @match        *://drrr.local/room*
 // @match        *://drrr.lan/room*
+// @require      https://cdn.jsdelivr.net/npm/dexie@4/dist/dexie.min.js
 // @grant        unsafeWindow
 // ==/UserScript==
 
 class TripcodeHelper {
   constructor() {
-    this._key = "drrr-tripcode-1";
     this._load();
   }
-  _load() {
-    this.tripcodes = localStorage[this._key] ? JSON.parse(localStorage[this._key]) : {};
-  }
-  _save() {
-    localStorage[this._key] = JSON.stringify(this.tripcodes);
-  }
-  _getTripcodesFromName(name) {
-    var result = {};
-    for (var tripcode in this.tripcodes) {
-      var names = this.tripcodes[tripcode];
-      if (names[name])
-        result[tripcode] = name;
+  async _load() {
+    const db = new Dexie("tripcode-find");
+    this.db = db;
+    db.version(1).stores({
+      tripcode: '++,tripcode, name'
+    });
+    if (localStorage['drrr-tripcode-1']) {
+      const oldData = JSON.parse(localStorage['drrr-tripcode-1']);
+      for (const tripcode in oldData) {
+        const names = oldData[tripcode];
+        for (const name in names) {
+          await db.tripcode.add({
+            tripcode: tripcode,
+            name: name
+          });
+        }
+      }
+      localStorage.removeItem('drrr-tripcode-1');
     }
-    return result;
   }
-  _getNamesFromTripcode(tripcode) {
-    return this.tripcodes[tripcode] === undefined ? null : this.tripcodes[tripcode];
-  }
-  _setNameTripcode(name, tripcode) {
-    if (this.tripcodes[tripcode] === undefined)
-      this.tripcodes[tripcode] = {};
 
-    this.tripcodes[tripcode][name] = tripcode;
-    this._save();
+  async remove(name, tripcode) {
+    await this.db.tripcode.where({
+      tripcode: tripcode,
+      name: name
+    }).delete();
   }
-  _removeNameTripcode(name, tripcode) {
-    if (this.tripcodes[tripcode] === undefined ||
-      this.tripcodes[tripcode][name] === undefined)
+
+  async is_name_exist_but_tc_wrong(name, tripcode) {
+    let exist = await this.db.tripcode.where({ tripcode: tripcode, name: name }).count();
+    if (exist) {
       return false;
-
-    delete this.tripcodes[tripcode][name];
-    this._save();
+    }
+    let existName = await this.db.tripcode.where('name').equals(name).count();
+    if (existName) {
+      return true;
+    } 
+    return false;
+  }
+  async add_if_noexist(name, tripcode) {
+    let exist = await this.db.tripcode.where({ tripcode: tripcode, name: name }).count();
+    if (exist) {
+      return false;
+    }
+    await this.db.tripcode.add({
+      tripcode: tripcode,
+      name: name
+    });
     return true;
   }
-  verify(name, tripcode) {
-    var tripcodes = this._getTripcodesFromName(name);
-    var keys = Object.getOwnPropertyNames(tripcodes);
-    if (keys.length) {
-      return tripcodes[tripcode] !== undefined;
-    } else {
-      return "Not found";
-    }
+  async addForcibly(name, tripcode) {
+    await this.db.tripcode.add({
+      tripcode: tripcode,
+      name: name
+    });
   }
-  remove(name, tripcode) {
-    return this._removeNameTripcode(name, tripcode);
+  async getNames(tripcode) {
+    let items = await this.db.tripcode.where('tripcode').equals(tripcode).toArray();
+    return items.map(e => e.name);
   }
-  add(name, tripcode) {
-    var verified = this.verify(name, tripcode);
-    if (verified === "Not found") {
-      this._setNameTripcode(name, tripcode);
-      return "Added";
-    }
-    return verified;
-  }
-  addForcibly(name, tripcode) {
-    this._setNameTripcode(name, tripcode);
-  }
-  getNames(tripcode) {
-    var result = this._getNamesFromTripcode(tripcode);
-    return result ? Object.getOwnPropertyNames(result) : [];
-  }
-  getTripcodes(name) {
-    var result = this._getTripcodesFromName(name);
-    return result ? Object.getOwnPropertyNames(result) : [];
+  async getTripcodes(name) {
+    let items = await this.db.tripcode.where('name').equals(name).toArray();
+    return items.map(e => e.tripcode);
   }
 }
-var TP = new TripcodeHelper();
+const TP = new TripcodeHelper();
 
-var scanNewTripcode = function (event, chat) {
+async function scanNewTripcode(event, chat) {
   var user = chat.user || chat.from;
   if (user.tripcode) {
-    var result = TP.add(user.name, user.tripcode);
-    if (result === false && chat.type == "join") {
+    var result = await TP.is_name_exist_but_tc_wrong(user.name, user.tripcode);
+    if (result && chat.type == "join") {
       swal({
         title: "Tripcode",
         text: t("tripcode of {1} should not be {2}",
@@ -103,7 +102,7 @@ var scanNewTripcode = function (event, chat) {
   }
 };
 
-var tripcodeOprationPrompt = function (isRemove = false) {
+function tripcodeOprationPrompt(isRemove = false) {
   var text = isRemove ? `Are you sure to remove {1} to {2}?` : `Are you sure to add {1} to {2}?`;
   var confirmButtonColor = isRemove ? "#DD6B55" : "#36d13e";
   var confirmButtonText = isRemove ? `❌${t("Yes, remove it!")}` : `✅${t("Yes, add it!")}`;
@@ -123,40 +122,44 @@ var tripcodeOprationPrompt = function (isRemove = false) {
       showCancelButton: true,
       closeOnConfirm: false,
       html: true
-    }, function removeTripCode() {
+    }, async function removeTripCode() {
       if (isRemove) {
-        TP.remove(name, tripcode);
+        await TP.remove(name, tripcode);
       } else {
-        TP.addForcibly(name, tripcode);
+        await TP.addForcibly(name, tripcode);
       }
       swal("Tripcode", t(successText), "success");
     });
   };
 };
-var changeTripcodeDisplayForMenu = function (menu, newTag) {
+function changeTripcodeDisplayForMenu(menu, newTag) {
   $(menu).find('.dropdown-item-tripcode').text(newTag);
 };
 
 $(unsafeWindow).on('room.chat.join', scanNewTripcode);
 $(unsafeWindow).on('room.chat.message', scanNewTripcode);
 
-$(unsafeWindow).on('room.user.menu.show', function (event, menu, user, functions) {
+$(unsafeWindow).on('room.user.menu.show', async function tripcode_menu(event, menu, user, functions) {
   var addDevisionIfNot = functions.addDevisionIfNot;
   var resetDevider = functions.resetDevider;
   var addNode = functions.addNode;
 
-  var rightcodes = TP.getTripcodes(user.name);
+  var rightcodes = await TP.getTripcodes(user.name);
 
   if (user.tripcode || rightcodes.length > 0) {
     var badTripFlag = false;
     resetDevider();
     if (user.tripcode) {
-      var result = TP.add(user.name, user.tripcode);
-      if (result) {
+      var result = await TP.is_name_exist_but_tc_wrong(user.name, user.tripcode);
+      if (!result) {
         // addNode('✅', function(){
         //     tripcodeOprationPrompt(true)(user.name, user.tripcode);
         // });
-        changeTripcodeDisplayForMenu(menu, `✅ #${user.tripcode}`);
+        if (await TP.add_if_noexist(user.name, user.tripcode)) {
+          changeTripcodeDisplayForMenu(menu, `🆕 #${user.tripcode}`);
+        } else{
+          changeTripcodeDisplayForMenu(menu, `✅ #${user.tripcode}`);
+        }
       } else {
         badTripFlag = true;
         changeTripcodeDisplayForMenu(menu, `❌ #${user.tripcode}`);
@@ -186,10 +189,10 @@ $(unsafeWindow).on('room.user.menu.show', function (event, menu, user, functions
       if (badTripFlag) {
         allCodes.unshift(user.tripcode);
       }
-      allCodes.forEach(function (tripcode) {
+      for (const tripcode of allCodes) {
         addDevisionIfNot();
         addNode(t('Other IDs for #{1}:', tripcode), null, 'dropdown-item-unclickable');
-        var names = TP.getNames(tripcode);
+        var names = await TP.getNames(tripcode);
         names.forEach(function (name) {
           if (name == user.name)
             return;
@@ -198,7 +201,7 @@ $(unsafeWindow).on('room.user.menu.show', function (event, menu, user, functions
             tripcodeOprationPrompt(true)(name, tripcode);
           });
         });
-      });
+      }
 
     } else {
       addDevisionIfNot();
