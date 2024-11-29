@@ -13,14 +13,22 @@
 
 class TripcodeHelper {
   constructor() {
-    this._load();
+    this.load().catch((e) => {
+      console.error(e)
+    });
   }
-  async _load() {
+  async load() {
     const db = new Dexie("tripcode-find");
     this.db = db;
-    db.version(1).stores({
+    await db.version(1).stores({
       tripcode: '++,tripcode, name'
     });
+
+    // Define schema version 2 with an upgrade function
+    await db.version(4).stores({
+      tripcode: '++,tripcode, name, &[tripcode+name]'
+    });
+
     if (localStorage['drrr-tripcode-1']) {
       const oldData = JSON.parse(localStorage['drrr-tripcode-1']);
       for (const tripcode in oldData) {
@@ -99,9 +107,9 @@ async function scanNewTripcode(event, chat) {
         type: "warning"
       });
     }
-    if(!result){
+    if (!result) {
       let added = await TP.add_if_noexist(user.name, user.tripcode)
-      if (added){
+      if (added) {
         console.log("new tc record", user.name, user.tripcode)
       }
     }
