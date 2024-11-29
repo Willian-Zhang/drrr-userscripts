@@ -8,7 +8,7 @@
 // @match        *://drrr.local/room*
 // @match        *://drrr.lan/room*
 // @require      https://cdn.jsdelivr.net/npm/dexie@4/dist/dexie.min.js
-// @grant        unsafeWindow
+// @grant        
 // ==/UserScript==
 
 class TripcodeHelper {
@@ -51,7 +51,7 @@ class TripcodeHelper {
     let existName = await this.db.tripcode.where('name').equals(name).count();
     if (existName) {
       return true;
-    } 
+    }
     return false;
   }
   async add_if_noexist(name, tripcode) {
@@ -83,9 +83,9 @@ class TripcodeHelper {
 const TP = new TripcodeHelper();
 
 async function scanNewTripcode(event, chat) {
-  var user = chat.user || chat.from;
+  let user = chat.user || chat.from;
   if (user.tripcode) {
-    var result = await TP.is_name_exist_but_tc_wrong(user.name, user.tripcode);
+    let result = await TP.is_name_exist_but_tc_wrong(user.name, user.tripcode);
     if (result && chat.type == "join") {
       swal({
         title: "Tripcode",
@@ -103,10 +103,10 @@ async function scanNewTripcode(event, chat) {
 };
 
 function tripcodeOprationPrompt(isRemove = false) {
-  var text = isRemove ? `Are you sure to remove {1} to {2}?` : `Are you sure to add {1} to {2}?`;
-  var confirmButtonColor = isRemove ? "#DD6B55" : "#36d13e";
-  var confirmButtonText = isRemove ? `❌${t("Yes, remove it!")}` : `✅${t("Yes, add it!")}`;
-  var successText = isRemove ? "Removed!" : "Added!";
+  let text = isRemove ? `Are you sure to remove {1} to {2}?` : `Are you sure to add {1} to {2}?`;
+  let confirmButtonColor = isRemove ? "#DD6B55" : "#36d13e";
+  let confirmButtonText = isRemove ? `❌${t("Yes, remove it!")}` : `✅${t("Yes, add it!")}`;
+  let successText = isRemove ? "Removed!" : "Added!";
   return function removeTripCodePrompt(name, tripcode) {
     swal({
       title: "Tripcode",
@@ -136,28 +136,28 @@ function changeTripcodeDisplayForMenu(menu, newTag) {
   $(menu).find('.dropdown-item-tripcode').text(newTag);
 };
 
-$(unsafeWindow).on('room.chat.join', scanNewTripcode);
-$(unsafeWindow).on('room.chat.message', scanNewTripcode);
+$(window).on('room.chat.join', scanNewTripcode);
+$(window).on('room.chat.message', scanNewTripcode);
 
-$(unsafeWindow).on('room.user.menu.show', async function tripcode_menu(event, menu, user, functions) {
-  var addDevisionIfNot = functions.addDevisionIfNot;
-  var resetDevider = functions.resetDevider;
-  var addNode = functions.addNode;
+$(window).on('room.user.menu.show', async function tripcode_menu(event, menu, user, functions) {
+  let addDevisionIfNot = functions.addDevisionIfNot;
+  let resetDevider = functions.resetDevider;
+  let addNode = functions.addNode;
 
-  var rightcodes = await TP.getTripcodes(user.name);
+  let rightcodes = await TP.getTripcodes(user.name);
 
   {
     let badTripFlag = false;
     resetDevider();
     if (user.tripcode) {
-      var result = await TP.is_name_exist_but_tc_wrong(user.name, user.tripcode);
+      let result = await TP.is_name_exist_but_tc_wrong(user.name, user.tripcode);
       if (!result) {
         // addNode('✅', function(){
         //     tripcodeOprationPrompt(true)(user.name, user.tripcode);
         // });
         if (await TP.add_if_noexist(user.name, user.tripcode)) {
           changeTripcodeDisplayForMenu(menu, `🆕 #${user.tripcode}`);
-        } else{
+        } else {
           changeTripcodeDisplayForMenu(menu, `✅ #${user.tripcode}`);
         }
       } else {
@@ -182,7 +182,7 @@ $(unsafeWindow).on('room.user.menu.show', async function tripcode_menu(event, me
     }
 
     if (user.tripcode) {
-      var allCodes = rightcodes;
+      let allCodes = rightcodes;
       if (badTripFlag) {
         allCodes.unshift(user.tripcode);
       }
@@ -193,14 +193,14 @@ $(unsafeWindow).on('room.user.menu.show', async function tripcode_menu(event, me
         }
         addDevisionIfNot();
         addNode(t('Other IDs for #{1}:', tripcode), null, 'dropdown-item-unclickable');
-        names.forEach(function (name) {
-          if (name == user.name)
-            return;
 
-          addNode(`${name}`, function () {
+        for (let name of names) {
+          if (name == user.name) continue;
+
+          addNode(name, () => {
             tripcodeOprationPrompt(true)(name, tripcode);
           });
-        });
+        }
       }
 
     } else {
