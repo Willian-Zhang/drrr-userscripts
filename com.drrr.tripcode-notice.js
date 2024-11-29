@@ -191,7 +191,6 @@ $(window).on('room.user.menu.show', async function tripcode_menu(event, menu, us
       dropdown.addNode(t('Other IDs for #{1}:', tripcode), null, 'dropdown-item-unclickable');
 
       for (let name of names) {
-        console.log('name', name)
         if (name == user.name) continue;
 
         dropdown.addNode(name, () => {
