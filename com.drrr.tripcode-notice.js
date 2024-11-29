@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DRRR Tripcode helper
 // @namespace    com.drrr.tripcode-helper
-// @version      3.0.2
+// @version      3.1
 // @description  Verifies Tripcode used on DRRR
 // @author       Willian
 // @match        *://drrr.com/room*
@@ -139,79 +139,74 @@ function changeTripcodeDisplayForMenu(menu, newTag) {
 $(window).on('room.chat.join', scanNewTripcode);
 $(window).on('room.chat.message', scanNewTripcode);
 
-$(window).on('room.user.menu.show', async function tripcode_menu(event, menu, user, functions) {
-  let addDevisionIfNot = functions.addDevisionIfNot;
-  let resetDevider = functions.resetDevider;
-  let addNode = functions.addNode;
-
+$(window).on('room.user.menu.show', async function tripcode_menu(event, menu, user, dropdown) {
   let rightcodes = await TP.getTripcodes(user.name);
 
-  {
-    let badTripFlag = false;
-    resetDevider();
-    if (user.tripcode) {
-      let result = await TP.is_name_exist_but_tc_wrong(user.name, user.tripcode);
-      if (!result) {
-        // addNode('✅', function(){
-        //     tripcodeOprationPrompt(true)(user.name, user.tripcode);
-        // });
-        if (await TP.add_if_noexist(user.name, user.tripcode)) {
-          changeTripcodeDisplayForMenu(menu, `🆕 #${user.tripcode}`);
-        } else {
-          changeTripcodeDisplayForMenu(menu, `✅ #${user.tripcode}`);
-        }
+
+  let badTripFlag = false;
+  dropdown.resetDevider();
+  if (user.tripcode) {
+    let result = await TP.is_name_exist_but_tc_wrong(user.name, user.tripcode);
+    if (!result) {
+      // dropdown.addNode('✅', function(){
+      //     tripcodeOprationPrompt(true)(user.name, user.tripcode);
+      // });
+      if (await TP.add_if_noexist(user.name, user.tripcode)) {
+        changeTripcodeDisplayForMenu(menu, `🆕 #${user.tripcode}`);
       } else {
-        badTripFlag = true;
-        changeTripcodeDisplayForMenu(menu, `❌ #${user.tripcode}`);
-        addDevisionIfNot();
-        addNode(`❌ #${user.tripcode}`, function () {
-          tripcodeOprationPrompt(false)(user.name, user.tripcode);
-        });
-
-        rightcodes.forEach(function (tripcode) {
-          addNode(`✅ #${tripcode}`, function () {
-            tripcodeOprationPrompt(true)(user.name, tripcode);
-          });
-        });
+        changeTripcodeDisplayForMenu(menu, `✅ #${user.tripcode}`);
       }
     } else {
-      addDevisionIfNot();
-      addNode(`❓${t('Not using tripcode')}`, function () {
-        tripcodeOprationPrompt(true)(user.name, user.tripcode);
+      badTripFlag = true;
+      changeTripcodeDisplayForMenu(menu, `❌ #${user.tripcode}`);
+      dropdown.addDevisionIfNot();
+      dropdown.addNode(`❌ #${user.tripcode}`, function () {
+        tripcodeOprationPrompt(false)(user.name, user.tripcode);
       });
-    }
 
-    if (user.tripcode) {
-      let allCodes = rightcodes;
-      if (badTripFlag) {
-        allCodes.unshift(user.tripcode);
-      }
-      for (const tripcode of allCodes) {
-        let names = await TP.getNames(tripcode);
-        if (names.length == 1) {
-          continue;
-        }
-        addDevisionIfNot();
-        addNode(t('Other IDs for #{1}:', tripcode), null, 'dropdown-item-unclickable');
-
-        for (let name of names) {
-          if (name == user.name) continue;
-
-          addNode(name, () => {
-            tripcodeOprationPrompt(true)(name, tripcode);
-          });
-        }
-      }
-
-    } else {
-      addDevisionIfNot();
-      addNode(`Other Tripcodes:`, null, 'dropdown-item-unclickable');
       rightcodes.forEach(function (tripcode) {
-        addNode(`#${tripcode}`, function () {
+        dropdown.addNode(`✅ #${tripcode}`, function () {
           tripcodeOprationPrompt(true)(user.name, tripcode);
         });
       });
     }
+  } else {
+    dropdown.addDevisionIfNot();
+    dropdown.addNode(`❓${t('Not using tripcode')}`, function () {
+      tripcodeOprationPrompt(true)(user.name, user.tripcode);
+    });
+  }
 
+  if (user.tripcode) {
+    let allCodes = rightcodes;
+    if (badTripFlag) {
+      allCodes.unshift(user.tripcode);
+    }
+    for (const tripcode of allCodes) {
+      let names = await TP.getNames(tripcode);
+      if (names.length == 1) {
+        continue;
+      }
+      dropdown.addDevisionIfNot();
+      dropdown.addNode(t('Other IDs for #{1}:', tripcode), null, 'dropdown-item-unclickable');
+
+      for (let name of names) {
+        console.log('name', name)
+        if (name == user.name) continue;
+
+        dropdown.addNode(name, () => {
+          tripcodeOprationPrompt(true)(name, tripcode);
+        });
+      }
+    }
+
+  } else {
+    dropdown.addDevisionIfNot();
+    dropdown.addNode(`Other Tripcodes:`, null, 'dropdown-item-unclickable');
+    rightcodes.forEach(function (tripcode) {
+      dropdown.addNode(`#${tripcode}`, function () {
+        tripcodeOprationPrompt(true)(user.name, tripcode);
+      });
+    });
   }
 });
