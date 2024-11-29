@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DRRR Tripcode helper
 // @namespace    com.drrr.tripcode-helper
-// @version      3.1
+// @version      3.1.1
 // @description  Verifies Tripcode used on DRRR
 // @author       Willian
 // @match        *://drrr.com/room*
@@ -98,6 +98,12 @@ async function scanNewTripcode(event, chat) {
         html: true,
         type: "warning"
       });
+    }
+    if(!result){
+      let added = await TP.add_if_noexist(user.name, user.tripcode)
+      if (added){
+        console.log("new tc record", user.name, user.tripcode)
+      }
     }
   }
 };
