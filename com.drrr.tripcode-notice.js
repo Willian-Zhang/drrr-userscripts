@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DRRR Tripcode helper
 // @namespace    com.drrr.tripcode-helper
-// @version      3.1.1
+// @version      3.2
 // @description  Verifies Tripcode used on DRRR
 // @author       Willian
 // @match        *://drrr.com/room*
@@ -90,6 +90,7 @@ class TripcodeHelper {
 }
 const TP = new TripcodeHelper();
 
+
 async function scanNewTripcode(event, chat) {
   let user = chat.user || chat.from;
   if (user.tripcode) {
@@ -108,9 +109,14 @@ async function scanNewTripcode(event, chat) {
       });
     }
     if (!result) {
-      let added = await TP.add_if_noexist(user.name, user.tripcode)
-      if (added) {
-        console.log("new tc record", user.name, user.tripcode)
+      try{
+          let added = await TP.add_if_noexist(user.name, user.tripcode)
+          if(added){
+            console.log("new tc record", user.name, user.tripcode)
+          }
+      }
+      catch(e){
+          console.log("tc add failed", user.name, user.tripcode)
       }
     }
   }
@@ -192,7 +198,7 @@ $(window).on('room.user.menu.show', async function tripcode_menu(event, menu, us
   }
 
   if (user.tripcode) {
-    let allCodes = rightcodes;
+    let allCodes = await TP.getTripcodes(user.name);
     if (badTripFlag) {
       allCodes.unshift(user.tripcode);
     }
